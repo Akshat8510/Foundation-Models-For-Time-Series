@@ -33,17 +33,40 @@ Once you have 64 different forecasts, how do you pick the winner?
 
 ---
 
-### The Models Used
-You need to remember these four for your codebase:
-1.  **Chronos (Amazon):** The "Language" model for time series (uses T5).
-2.  **TimesFM (Google):** The "Patch" model (decoder-only).
-3.  **Moirai (Salesforce):** The "Universal" model (can handle any data frequency).
-4.  **Time-MoE:** The "Expert" model (uses different sub-networks for different patterns).
+**The Models (The Brains):**
+1.  **Chronos (Amazon):** The "Language" model. It turns numbers into words (tokens) using the T5 architecture.
+2.  **TimesFM (Google):** The "Patch" model. A decoder-only (GPT-style) model that groups data into chunks to see patterns better.
+3.  **Moirai (Salesforce):** The "Universal" model. Built to handle any data frequency (hourly, daily, etc.) out of the box.
+4.  **Time-MoE (Microsoft):** The "Expert" model. It uses a "Mixture of Experts" to let different sub-networks handle different types of data vibes.
+
+**The Datasets (The Testing Ground):**
+*   **ETTh1:** Electricity Transformer data. The "standard test" for all time series models.
+*   **Traffic:** Highway occupancy data. Very noisy and messy—perfect for testing "Inference Scaling."
+*   **Electricity:** Mass consumption patterns. Large scale and very seasonal.
+*   **Weather:** Temperature and pressure. Highly cyclical and predictable.
 
 ---
 
-### The New Metric: RobustMSE
-Standard MSE is like checking a student's grade on one single test. **RobustMSE** is like taking the average of 5 tests where the questions were slightly different. It measures how **reliable** the model is when it’s allowed to "think" multiple times.
+### Mathematical Innovations
+
+#### 1. The Critical Sample Threshold ($N^*$)
+
+This is the "Break-even Point." Shaking the data is risky. If you only ask the model 2 or 3 times, the "noise" might just give you garbage.
+
+**Formula:**
+
+$$
+N^* = \frac{\ln\left(\frac{L_{bad}-L_{good}}{L_0-L_{good}}\right)}{\ln\left(\frac{1}{1-\rho}\right)}
+$$
+*   **Simple Version:** You only start winning once your number of tries ($N$) is bigger than this threshold. 
+*   **Rule of Thumb:** If you are "broke" (low compute), stay safe with standard. If you have a big GPU budget ($N > 64$), go wild with DSI!
+
+#### 2. RobustMSE
+Standard MSE is like checking a student's grade on one test. RobustMSE checks the average of multiple "diversified" test runs. It proves the model is actually stable, not just lucky.
+
+$$
+RobustMSE_{EM|MV} = \frac{1}{T} \sum_{i=1}^{T} MSE(\hat{Y}^i_{EM|MV}, Y)
+$$
 
 ---
 
